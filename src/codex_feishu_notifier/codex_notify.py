@@ -9,7 +9,7 @@ if __package__ in (None, ""):
 
 from codex_feishu_notifier.event import codex_event_from_notify
 from codex_feishu_notifier.sender import send_codex_event
-from codex_feishu_notifier.state import already_sent, log
+from codex_feishu_notifier.state import already_sent, log, mark_sent
 
 
 def read_notification(argv) -> Optional[dict]:
@@ -46,6 +46,7 @@ def main(argv=None) -> int:
     try:
         result = send_codex_event(event)
         if result.get("code") == 0:
+            mark_sent(key, event.assistant_result, "notify-sent.json")
             log(f"sent: {result.get('data', {}).get('message_id', 'unknown')}")
         else:
             log(f"send failed: {json.dumps(result, ensure_ascii=False)}")

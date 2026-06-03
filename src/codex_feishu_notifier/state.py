@@ -18,18 +18,28 @@ def log(message: str, name: str = "notify") -> None:
 
 
 def already_sent(key: str, message: str, state_name: str = "sent.json") -> bool:
-    digest = hashlib.sha256(message.encode("utf-8")).hexdigest()
+    state = read_sent_state(state_name)
+    return state.get(key) == message_digest(message)
+
+
+def mark_sent(key: str, message: str, state_name: str = "sent.json") -> None:
+    state_file = default_state_dir() / state_name
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state = read_sent_state(state_name)
+    state[key] = message_digest(message)
+    state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def message_digest(message: str) -> str:
+    return hashlib.sha256(message.encode("utf-8")).hexdigest()
+
+
+def read_sent_state(state_name: str) -> dict:
     state_file = default_state_dir() / state_name
 
     try:
-        state = json.loads(state_file.read_text(encoding="utf-8"))
+        loaded = json.loads(state_file.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
-        state = {}
+        return {}
 
-    if state.get(key) == digest:
-        return True
-
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    state[key] = digest
-    state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
-    return False
+    return loaded if isinstance(loaded, dict) else {}

@@ -18,6 +18,7 @@ def test_main_sends_composed_codex_event(monkeypatch, tmp_path):
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(codex_notify, "already_sent", lambda *args: False)
+    monkeypatch.setattr(codex_notify, "mark_sent", lambda *args: None)
     monkeypatch.setattr(
         codex_notify,
         "send_codex_event",

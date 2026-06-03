@@ -7,8 +7,9 @@ from pathlib import Path
 if __package__ in (None, ""):
     sys.path.insert(0, str(__file__).split("/src/")[0] + "/src")
 
-from codex_feishu_notifier.sender import send_text
-from codex_feishu_notifier.state import already_sent, log
+from codex_feishu_notifier.event import CodexEvent, project_name_from_cwd
+from codex_feishu_notifier.sender import send_codex_event
+from codex_feishu_notifier.state import already_sent, log, mark_sent
 
 
 def safe_string(value) -> str:
@@ -94,6 +95,29 @@ def extract_message(payload: dict) -> str:
     )
 
 
+def extract_latest_prompt(payload: dict) -> str:
+    value = payload.get("input_messages") or payload.get("input-messages")
+    if isinstance(value, list):
+        for item in reversed(value):
+            text = safe_string(item).strip()
+            if text:
+                return text
+    return safe_string(payload.get("prompt") or payload.get("user_prompt")).strip()
+
+
+def event_from_stop_payload(payload: dict, message: str) -> CodexEvent:
+    cwd = safe_string(payload.get("cwd") or payload.get("working_directory")).strip() or os.getcwd()
+    return CodexEvent(
+        event_type="stop",
+        cwd=cwd,
+        project=project_name_from_cwd(cwd),
+        user_prompt=extract_latest_prompt(payload),
+        assistant_result=message,
+        thread_id=safe_string(payload.get("thread_id") or payload.get("thread-id")).strip(),
+        turn_id=safe_string(payload.get("turn_id") or payload.get("turn-id")).strip(),
+    )
+
+
 def main() -> int:
     if os.getenv("CODEX_FEISHU_NOTIFY_ENABLED", "1") == "0":
         return 0
@@ -119,8 +143,9 @@ def main() -> int:
         return 0
 
     try:
-        result = send_text(message, last_paragraph=True)
+        result = send_codex_event(event_from_stop_payload(payload, message))
         if result.get("code") == 0:
+            mark_sent(key, message, "stop-hook-sent.json")
             log(f"sent: {result.get('data', {}).get('message_id', 'unknown')}", "stop-hook")
         else:
             log(f"send failed: {json.dumps(result, ensure_ascii=False)}", "stop-hook")

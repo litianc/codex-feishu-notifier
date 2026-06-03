@@ -60,6 +60,10 @@ This repository also includes `.codex/config.toml` with that project-local
 setting. The file contains no secrets; `.env` still holds your Feishu app
 credentials.
 
+The repository also includes `.codex/hooks.json` with a `Stop` hook fallback.
+It runs the local source checkout directly and uses the same compact message
+format as `notify`.
+
 For a local editable checkout without installing scripts, use:
 
 ```toml

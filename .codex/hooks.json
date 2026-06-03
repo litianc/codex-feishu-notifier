@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PYTHONPATH=/Users/xyli/Documents/Code/codex-feishu-notifier/src python3 /Users/xyli/Documents/Code/codex-feishu-notifier/src/codex_feishu_notifier/codex_stop_hook.py",
+            "timeout": 15,
+            "statusMessage": "Sending Feishu completion notice"
+          }
+        ]
+      }
+    ]
+  }
+}
