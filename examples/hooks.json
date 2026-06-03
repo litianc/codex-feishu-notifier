@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "codex-feishu-stop-hook",
+            "timeout": 15,
+            "statusMessage": "Sending Feishu completion notice"
+          }
+        ]
+      }
+    ]
+  }
+}
