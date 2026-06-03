@@ -56,6 +56,10 @@ Add this to a Codex profile or config:
 notify = ["codex-feishu-notify"]
 ```
 
+This repository also includes `.codex/config.toml` with that project-local
+setting. The file contains no secrets; `.env` still holds your Feishu app
+credentials.
+
 For a local editable checkout without installing scripts, use:
 
 ```toml

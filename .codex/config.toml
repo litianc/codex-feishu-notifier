@@ -1,0 +1,5 @@
+# Project-local Codex notification wiring.
+#
+# Secrets stay in `.env` or your shell environment. This file only tells Codex
+# which local command to run after an agent turn completes.
+notify = ["codex-feishu-notify"]
