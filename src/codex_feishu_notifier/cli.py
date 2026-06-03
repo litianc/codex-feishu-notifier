@@ -4,8 +4,10 @@ import sys
 from pathlib import Path
 
 from .config import get_feishu_config
+from .event import codex_event_from_notify
 from .feishu import FeishuBot
 from .sender import send_text
+from .text import compose_codex_message
 
 
 DEFAULT_MESSAGE_TEXT = (
@@ -22,6 +24,13 @@ def parse_args(argv=None):
     parser.add_argument("--stdin", action="store_true", help="Read message content from stdin.")
     parser.add_argument("--last-paragraph", action="store_true")
     parser.add_argument("--check", action="store_true", help="Verify Feishu credentials only.")
+    parser.add_argument(
+        "--render-codex-payload",
+        "--dry-run-codex-payload",
+        dest="render_codex_payload",
+        metavar="PATH",
+        help="Render a Codex notify JSON payload without sending it. Use '-' for stdin.",
+    )
     return parser.parse_args(argv)
 
 
@@ -33,10 +42,22 @@ def resolve_text(args) -> str:
     return args.text
 
 
+def read_payload(path: str) -> dict:
+    raw = sys.stdin.read() if path == "-" else Path(path).read_text(encoding="utf-8")
+    return json.loads(raw)
+
+
 def main(argv=None) -> int:
     args = parse_args(argv)
 
     try:
+        if args.render_codex_payload:
+            event = codex_event_from_notify(read_payload(args.render_codex_payload))
+            rendered = compose_codex_message(event)
+            if rendered:
+                print(rendered)
+            return 0
+
         if args.check:
             config = get_feishu_config()
             bot = FeishuBot(config["app_id"], config["app_secret"])

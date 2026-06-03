@@ -7,7 +7,8 @@ from typing import Optional
 if __package__ in (None, ""):
     sys.path.insert(0, str(__file__).split("/src/")[0] + "/src")
 
-from codex_feishu_notifier.sender import send_text
+from codex_feishu_notifier.event import codex_event_from_notify
+from codex_feishu_notifier.sender import send_codex_event
 from codex_feishu_notifier.state import already_sent, log
 
 
@@ -32,18 +33,18 @@ def main(argv=None) -> int:
     if not notification or notification.get("type") != "agent-turn-complete":
         return 0
 
-    message = (notification.get("last-assistant-message") or "").strip()
-    if not message:
+    event = codex_event_from_notify(notification)
+    if not event.assistant_result:
         log("skip: empty last-assistant-message")
         return 0
 
-    key = notification.get("turn-id") or message
-    if already_sent(key, message, "notify-sent.json"):
+    key = event.turn_id or event.assistant_result
+    if already_sent(key, event.assistant_result, "notify-sent.json"):
         log("skip: duplicate notification")
         return 0
 
     try:
-        result = send_text(message, last_paragraph=True)
+        result = send_codex_event(event)
         if result.get("code") == 0:
             log(f"sent: {result.get('data', {}).get('message_id', 'unknown')}")
         else:

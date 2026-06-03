@@ -62,8 +62,21 @@ For a local editable checkout without installing scripts, use:
 notify = ["python3", "/absolute/path/to/codex-feishu-notifier/src/codex_feishu_notifier/codex_notify.py"]
 ```
 
-Codex calls the notify command with one JSON argument. This tool sends the last
-non-empty paragraph of `last-assistant-message`.
+Codex calls the notify command with one JSON argument. This tool normalizes the
+payload and sends a compact IM message containing:
+
+- workspace name
+- the latest user prompt, shortened for scanability
+- the final non-empty assistant result paragraph
+- working directory
+
+Preview the message without sending it:
+
+```bash
+codex-feishu-notifier --render-codex-payload payload.json
+# Equivalent:
+codex-feishu-notifier --dry-run-codex-payload payload.json
+```
 
 ## Codex Stop Hook Integration
 
