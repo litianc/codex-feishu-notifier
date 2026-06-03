@@ -1,0 +1,97 @@
+# codex-feishu-notifier
+
+Send Codex completion summaries to Feishu.
+
+The recommended Codex integration is `notify`, because Codex passes an
+`agent-turn-complete` JSON payload containing `last-assistant-message`.
+The package also includes a `Stop` hook adapter for environments where hook
+payloads include final-message fields or transcript paths.
+
+## Install
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e .
+```
+
+## Configure
+
+Copy the example file and fill in your own Feishu app credentials:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+
+```text
+FEISHU_APP_ID=cli_xxx
+FEISHU_APP_SECRET=your_app_secret
+FEISHU_RECEIVE_ID=ou_xxx
+FEISHU_RECEIVE_ID_TYPE=open_id
+```
+
+Never commit `.env`.
+
+## Send A Manual Test
+
+```bash
+codex-feishu-notifier --check
+codex-feishu-notifier --text "hello from codex-feishu-notifier"
+```
+
+Send only the last paragraph from stdin:
+
+```bash
+printf 'Work done\n\nFinal summary only' \
+  | codex-feishu-notifier --stdin --last-paragraph
+```
+
+## Codex Notify Integration
+
+Add this to a Codex profile or config:
+
+```toml
+notify = ["codex-feishu-notify"]
+```
+
+For a local editable checkout without installing scripts, use:
+
+```toml
+notify = ["python3", "/absolute/path/to/codex-feishu-notifier/src/codex_feishu_notifier/codex_notify.py"]
+```
+
+Codex calls the notify command with one JSON argument. This tool sends the last
+non-empty paragraph of `last-assistant-message`.
+
+## Codex Stop Hook Integration
+
+Example `hooks.json`:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "codex-feishu-stop-hook",
+            "timeout": 15,
+            "statusMessage": "Sending Feishu completion notice"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Use Codex's `/hooks` UI to review and trust project-local hooks.
+
+## Disable Temporarily
+
+```bash
+CODEX_FEISHU_NOTIFY_ENABLED=0 codex
+```
